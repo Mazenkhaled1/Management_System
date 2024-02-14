@@ -1,0 +1,175 @@
+awel wahed men gher el response bta3ty ana 
+da el service ---------------------------------------------
+namespace App\Services;
+
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\YourModel;
+
+class YourService
+{
+    public function updateResource(Request $request, $id)
+    {
+        try {
+            $this->validateUpdateRequest($request);
+
+            $resource = YourModel::findOrFail($id);
+            $resource->update($request->all());
+
+            return ['status' => 'success', 'message' => 'Resource updated successfully'];
+
+        } catch (ModelNotFoundException $e) {
+            throw new \Exception('Resource not found', 404);
+
+        } catch (\Exception $e) {
+            throw new \Exception('Error updating resource', 500);
+        }
+    }
+
+    private function validateUpdateRequest(Request $request)
+    {
+        // Add your validation rules here
+        $request->validate([
+            // Your validation rules here
+        ]);
+    }
+}
+
+---------------------------------------------------------
+
+w da el controller ---------------------------------------------
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Services\YourService;
+
+class YourController extends Controller
+{
+    protected $yourService;
+
+    public function __construct(YourService $yourService)
+    {
+        $this->yourService = $yourService;
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $response = $this->yourService->updateResource($request, $id);
+            return response()->json($response);
+
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    private function errorResponse($message, $statusCode)
+    {
+        return response()->json(['status' => 'error', 'message' => $message], $statusCode);
+    }
+}
+
+
+
+
+---------------------------------------------
+
+da tany wahed b el specical response bta3ty ---------------------------------------------
+
+da el service ---------------------------------------------
+
+namespace App\Services;
+
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\YourModel;
+
+class YourService
+{
+    public function updateResource(Request $request, $id)
+    {
+        try {
+            $this->validateUpdateRequest($request);
+
+            $resource = YourModel::findOrFail($id);
+            $resource->update($request->all());
+
+            return ['status' => 'success', 'message' => 'Resource updated successfully'];
+
+        } catch (ModelNotFoundException $e) {
+            return ['status' => 'error', 'message' => 'Resource not found', 'code' => 404];
+
+        } catch (\Exception $e) {
+            return ['status' => 'error', 'message' => 'Error updating resource', 'code' => 500];
+        }
+    }
+
+    private function validateUpdateRequest(Request $request)
+    {
+        // Add your validation rules here
+        $request->validate([
+            // Your validation rules here
+        ]);
+    }
+}
+
+
+w da el controller ---------------------------------------------
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Services\YourService;
+
+class YourController extends Controller
+{
+    protected $yourService;
+
+    public function __construct(YourService $yourService)
+    {
+        $this->yourService = $yourService;
+    }
+
+    public function update(Request $request, $id)
+    {
+        $response = $this->yourService->updateResource($request, $id);
+
+        if ($response['status'] === 'success') {
+            return response()->json($response);
+        } else {
+            return $this->errorResponse($response['message'], $response['code']);
+        }
+    }
+
+    private function errorResponse($message, $statusCode)
+    {
+        return response()->json(['status' => 'error', 'message' => $message], $statusCode);
+    }
+}
+
+
+
+
+
+
+
+
+search  ---------------------------------------------
+
+
+
+
+public function search(Request $request) { 
+
+// dd($request->input('search')) ; 
+$word = $request->input('search') ?? null ;  // aw tare2a tanya $request->has('search') ? $request->input('search') : null 
+$ads = Ad::when($word != null , function ($query) use($word) {
+    $query->where('title' , 'like' , '%' . $word .'%') ;
+})->latest()->get() ;
+
+if(count($ads) > 0  ) { 
+
+    return ApiResponse::sendResponse(200 , 'Search Completed Successfully', AdResource::collection($ads)) ; 
+}
+return ApiResponse::sendResponse(200 , 'Not Matching ', []) ; 
+}
